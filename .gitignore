@@ -1,0 +1,12 @@
+# Окружение
+.env
+
+# Покрытие
+coverage.out
+coverage.html
+
+# Личные заметки, не для репозитория
+hints.md
+
+# macOS
+.DS_Store
