@@ -1,0 +1,78 @@
+name: goecho
+
+# Общие параметры сборки Go-приложения.
+x-go-build: &go-build
+  context: .
+  dockerfile: build/Dockerfile
+
+# Общие переменные окружения API и мигратора.
+x-app-env: &app-env
+  APP_ENV: ${APP_ENV:-dev}
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+  POSTGRES_DSN: postgres://${POSTGRES_USER:-goecho}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-goecho}?sslmode=disable
+
+services:
+  # Основная база данных.
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-goecho}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-goecho}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8"
+    ports:
+      # Доступ с хоста. Внутри Compose используется postgres:5432.
+      - "127.0.0.1:${POSTGRES_PORT:-55432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  # Одноразовый сервис применения SQL-миграций.
+  migrator:
+    image: migrate/migrate:v4.18.3
+    restart: "no"
+    volumes:
+      - ./migrations:/migrations:ro
+    command:
+      - "-path=/migrations"
+      - "-database=postgres://${POSTGRES_USER:-goecho}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-goecho}?sslmode=disable"
+      - "up"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # HTTP API.
+  goecho-api:
+    build: 
+      <<: *go-build
+      args:
+        SERVICE: goecho-api
+    restart: unless-stopped
+    environment: *app-env
+    ports:
+      - "${API_PORT:-8080}:8080"
+    depends_on:
+      migrator:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        - CMD
+        - wget
+        - -q
+        - --spider
+        # - http://127.0.0.1:8080/healthz // Добавить эндопит и вернуть эту проверку в будущем
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+
+volumes:
+  pgdata:
