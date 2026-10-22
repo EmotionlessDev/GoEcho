@@ -79,7 +79,7 @@ services:
     environment:
       SWAGGER_JSON: /spec/openapi.yaml
     volumes:
-      - ./docs/api/openapi.yaml:/spec/openapi.yaml:ro
+      - ./api/openapi.yaml:/spec/openapi.yaml:ro
     ports:
       - "127.0.0.1:${SWAGGER_UI_PORT:-8085}:8080"
     healthcheck:
