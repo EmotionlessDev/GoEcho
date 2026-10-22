@@ -8,10 +8,16 @@ import (
 	"os/signal"
 	"syscall"
 
+	httpapi "github.com/EmotionlessDev/GoEcho/gen/http"
 	"github.com/EmotionlessDev/GoEcho/internal/config"
+	apiHttp "github.com/EmotionlessDev/GoEcho/internal/delivery/http"
 	"github.com/EmotionlessDev/GoEcho/internal/httpx"
 	"github.com/EmotionlessDev/GoEcho/internal/logger"
+	"github.com/EmotionlessDev/GoEcho/internal/password"
 	"github.com/EmotionlessDev/GoEcho/internal/pg"
+	userHttp "github.com/EmotionlessDev/GoEcho/internal/user/delivery/http"
+	userRepo "github.com/EmotionlessDev/GoEcho/internal/user/repository"
+	userUsecase "github.com/EmotionlessDev/GoEcho/internal/user/usecase"
 )
 
 func main() {
@@ -49,6 +55,18 @@ func run() error {
 	health.Register("postgres", pg.HealthCheck(pool))
 
 	router := httpx.NewRouter(log, health)
+
+	// hasher
+	hasher := password.NewBcryptPasswordHasher()
+
+	userRepo := userRepo.NewPostgresUserRepository(pool)
+	createUser := userUsecase.NewCreateUser(userRepo, hasher)
+	userHandler := userHttp.NewHandler(createUser)
+
+	apiHandler := apiHttp.NewAPIHandler(userHandler)
+	// user routes
+	strictHandler := httpapi.NewStrictHandler(apiHandler, nil)
+	httpapi.HandlerFromMux(strictHandler, router)
 
 	log.InfoContext(ctx, "запускаю goecho-api",
 		slog.String("env", cfg.Env),
