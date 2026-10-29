@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"unicode/utf8"
 
+	"github.com/EmotionlessDev/GoEcho/internal/helpers/validation"
 	"github.com/EmotionlessDev/GoEcho/internal/user/apperror"
 	"github.com/EmotionlessDev/GoEcho/internal/user/domain"
 )
@@ -47,9 +47,9 @@ func (uc *CreateUser) Execute(
 	input.Username = strings.TrimSpace(input.Username)
 	input.Email = strings.TrimSpace(input.Email)
 
-	if !validUsername(input.Username) ||
-		!validEmail(input.Email) ||
-		!validPassword(input.Password) {
+	if !validation.ValidUsername(input.Username) ||
+		!validation.ValidEmail(input.Email) ||
+		!validation.ValidPassword(input.Password) {
 		return nil, apperror.ErrInvalidInput
 	}
 
@@ -73,32 +73,4 @@ func (uc *CreateUser) Execute(
 	}
 
 	return user, nil
-}
-
-func validUsername(username string) bool {
-	if len(username) < 3 || len(username) > 32 {
-		return false
-	}
-
-	for _, r := range username {
-		if !((r >= 'a' && r <= 'z') ||
-			(r >= 'A' && r <= 'Z') ||
-			(r >= '0' && r <= '9') ||
-			r == '_') {
-			return false
-		}
-	}
-
-	return true
-}
-
-func validEmail(email string) bool {
-	return len(email) <= 254 &&
-		strings.Contains(email, "@") &&
-		!strings.ContainsAny(email, " \t\r\n") &&
-		utf8.ValidString(email)
-}
-
-func validPassword(password string) bool {
-	return len(password) >= 8 && len(password) <= 128
 }

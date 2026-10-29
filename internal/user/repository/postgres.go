@@ -80,3 +80,36 @@ func (r *PostgresUserRepository) GetByID(
 
 	return &user, nil
 }
+
+const getUserByEmailQuery = `
+SELECT id, username, email, password_hash, created_at, updated_at
+FROM users
+WHERE email = $1
+`
+
+func (r *PostgresUserRepository) GetByEmail(
+	ctx context.Context,
+	email string,
+) (*domain.User, error) {
+	row := r.pool.QueryRow(ctx, getUserByEmailQuery, email)
+
+	var user domain.User
+
+	err := row.Scan(
+		&user.ID,
+		&user.Username,
+		&user.Email,
+		&user.PasswordHash,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, apperror.ErrUserNotFound
+		}
+
+		return nil, fmt.Errorf("get user by email: %w", err)
+	}
+
+	return &user, nil
+}

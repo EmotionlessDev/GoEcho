@@ -4,16 +4,19 @@ import (
 	"context"
 
 	httpapi "github.com/EmotionlessDev/GoEcho/gen/http"
+	authHttp "github.com/EmotionlessDev/GoEcho/internal/auth/delivery/http"
 	userHttp "github.com/EmotionlessDev/GoEcho/internal/user/delivery/http"
 )
 
 type APIHandler struct {
 	users *userHttp.Handler
+	auth  *authHttp.Handler
 }
 
-func NewAPIHandler(users *userHttp.Handler) *APIHandler {
+func NewAPIHandler(users *userHttp.Handler, auth *authHttp.Handler) *APIHandler {
 	return &APIHandler{
 		users: users,
+		auth:  auth,
 	}
 }
 
@@ -38,4 +41,11 @@ func (h *APIHandler) GetUserByID(
 	request httpapi.GetUserByIDRequestObject,
 ) (httpapi.GetUserByIDResponseObject, error) {
 	return h.users.GetUserByID(ctx, request)
+}
+
+func (h *APIHandler) Login(
+	ctx context.Context,
+	request httpapi.LoginRequestObject,
+) (httpapi.LoginResponseObject, error) {
+	return h.auth.Login(ctx, request)
 }

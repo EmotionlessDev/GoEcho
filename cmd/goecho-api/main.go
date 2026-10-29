@@ -9,6 +9,9 @@ import (
 	"syscall"
 
 	httpapi "github.com/EmotionlessDev/GoEcho/gen/http"
+	authHttp "github.com/EmotionlessDev/GoEcho/internal/auth/delivery/http"
+	authJwt "github.com/EmotionlessDev/GoEcho/internal/auth/token"
+	authUsecase "github.com/EmotionlessDev/GoEcho/internal/auth/usecase"
 	"github.com/EmotionlessDev/GoEcho/internal/config"
 	apiHttp "github.com/EmotionlessDev/GoEcho/internal/delivery/http"
 	"github.com/EmotionlessDev/GoEcho/internal/httpx"
@@ -58,15 +61,18 @@ func run() error {
 
 	// hasher
 	hasher := password.NewBcryptPasswordHasher()
+	jwtService := authJwt.NewJWTService([]byte(cfg.JWT.Secret), cfg.JWT.TTL)
 
 	userRepo := userRepo.NewPostgresUserRepository(pool)
 
 	createUser := userUsecase.NewCreateUser(userRepo, hasher)
 	getUserByID := userUsecase.NewGetUserByID(userRepo)
+	login := authUsecase.NewLogin(userRepo, hasher, jwtService)
 
 	userHandler := userHttp.NewHandler(createUser, getUserByID)
+	authHandler := authHttp.NewHandler(login)
 
-	apiHandler := apiHttp.NewAPIHandler(userHandler)
+	apiHandler := apiHttp.NewAPIHandler(userHandler, authHandler)
 	// user routes
 	strictHandler := httpapi.NewStrictHandler(apiHandler, nil)
 

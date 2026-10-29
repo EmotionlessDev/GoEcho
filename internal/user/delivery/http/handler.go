@@ -24,9 +24,6 @@ func NewHandler(createUser *usecase.CreateUser, getUserByID *usecase.GetUserByID
 	}
 }
 
-// Проверка во время компиляции: Handler реализует StrictServerInterface.
-var _ httpapi.StrictServerInterface = (*Handler)(nil)
-
 func (h *Handler) CreateUser(
 	ctx context.Context,
 	request httpapi.CreateUserRequestObject,
