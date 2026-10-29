@@ -13,8 +13,11 @@ servers:
 tags:
   - name: Users
     description: User registration and profiles
+  - name: Auth
+    description: Authentication and authorization
 
 paths:
+# users
   /api/v1/users:
     post:
       tags:
@@ -139,6 +142,57 @@ paths:
               example:
                 code: USER_NOT_FOUND
                 message: User with the specified ID does not exist
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: INTERNAL_SERVER_ERROR
+                message: An unexpected error occurred on the server
+# auth
+  /api/v1/auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Authenticate user
+      operationId: login
+      description: |
+        Authenticates a user with email and password.
+        Returns a JWT access token.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "400":
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: INVALID_REQUEST
+                message: Request body is missing required fields or has invalid values
+        "401":
+          description: Invalid email or password
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: INVALID_CREDENTIALS
+                message: Email or password is incorrect
         "500":
           description: Internal server error
           content:
