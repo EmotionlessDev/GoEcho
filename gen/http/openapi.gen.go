@@ -109,6 +109,7 @@ type MiddlewareFunc func(http.Handler) http.Handler
 
 // CreateUser operation middleware
 func (siw *ServerInterfaceWrapper) CreateUser(w http.ResponseWriter, r *http.Request) {
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.CreateUser(w, r)
 	}))
@@ -122,6 +123,7 @@ func (siw *ServerInterfaceWrapper) CreateUser(w http.ResponseWriter, r *http.Req
 
 // GetCurrentUser operation middleware
 func (siw *ServerInterfaceWrapper) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetCurrentUser(w, r)
 	}))
@@ -135,6 +137,7 @@ func (siw *ServerInterfaceWrapper) GetCurrentUser(w http.ResponseWriter, r *http
 
 // GetUserByID operation middleware
 func (siw *ServerInterfaceWrapper) GetUserByID(w http.ResponseWriter, r *http.Request) {
+
 	var err error
 	_ = err
 
@@ -295,6 +298,7 @@ type CreateUserResponseObject interface {
 type CreateUser201JSONResponse UserResponse
 
 func (response CreateUser201JSONResponse) VisitCreateUserResponse(w http.ResponseWriter) error {
+
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
 		return err
@@ -308,6 +312,7 @@ func (response CreateUser201JSONResponse) VisitCreateUserResponse(w http.Respons
 type CreateUser400JSONResponse ErrorResponse
 
 func (response CreateUser400JSONResponse) VisitCreateUserResponse(w http.ResponseWriter) error {
+
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
 		return err
@@ -321,6 +326,7 @@ func (response CreateUser400JSONResponse) VisitCreateUserResponse(w http.Respons
 type CreateUser409JSONResponse ErrorResponse
 
 func (response CreateUser409JSONResponse) VisitCreateUserResponse(w http.ResponseWriter) error {
+
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
 		return err
@@ -334,6 +340,7 @@ func (response CreateUser409JSONResponse) VisitCreateUserResponse(w http.Respons
 type CreateUser500JSONResponse ErrorResponse
 
 func (response CreateUser500JSONResponse) VisitCreateUserResponse(w http.ResponseWriter) error {
+
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
 		return err
@@ -344,7 +351,8 @@ func (response CreateUser500JSONResponse) VisitCreateUserResponse(w http.Respons
 	return err
 }
 
-type GetCurrentUserRequestObject struct{}
+type GetCurrentUserRequestObject struct {
+}
 
 type GetCurrentUserResponseObject interface {
 	VisitGetCurrentUserResponse(w http.ResponseWriter) error
@@ -353,6 +361,7 @@ type GetCurrentUserResponseObject interface {
 type GetCurrentUser200JSONResponse UserResponse
 
 func (response GetCurrentUser200JSONResponse) VisitGetCurrentUserResponse(w http.ResponseWriter) error {
+
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
 		return err
@@ -366,6 +375,7 @@ func (response GetCurrentUser200JSONResponse) VisitGetCurrentUserResponse(w http
 type GetCurrentUser401JSONResponse ErrorResponse
 
 func (response GetCurrentUser401JSONResponse) VisitGetCurrentUserResponse(w http.ResponseWriter) error {
+
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
 		return err
@@ -379,6 +389,7 @@ func (response GetCurrentUser401JSONResponse) VisitGetCurrentUserResponse(w http
 type GetCurrentUser500JSONResponse ErrorResponse
 
 func (response GetCurrentUser500JSONResponse) VisitGetCurrentUserResponse(w http.ResponseWriter) error {
+
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
 		return err
@@ -400,6 +411,7 @@ type GetUserByIDResponseObject interface {
 type GetUserByID200JSONResponse PublicUserResponse
 
 func (response GetUserByID200JSONResponse) VisitGetUserByIDResponse(w http.ResponseWriter) error {
+
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
 		return err
@@ -413,6 +425,7 @@ func (response GetUserByID200JSONResponse) VisitGetUserByIDResponse(w http.Respo
 type GetUserByID400JSONResponse ErrorResponse
 
 func (response GetUserByID400JSONResponse) VisitGetUserByIDResponse(w http.ResponseWriter) error {
+
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
 		return err
@@ -426,6 +439,7 @@ func (response GetUserByID400JSONResponse) VisitGetUserByIDResponse(w http.Respo
 type GetUserByID401JSONResponse ErrorResponse
 
 func (response GetUserByID401JSONResponse) VisitGetUserByIDResponse(w http.ResponseWriter) error {
+
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
 		return err
@@ -439,6 +453,7 @@ func (response GetUserByID401JSONResponse) VisitGetUserByIDResponse(w http.Respo
 type GetUserByID404JSONResponse ErrorResponse
 
 func (response GetUserByID404JSONResponse) VisitGetUserByIDResponse(w http.ResponseWriter) error {
+
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
 		return err
@@ -452,6 +467,7 @@ func (response GetUserByID404JSONResponse) VisitGetUserByIDResponse(w http.Respo
 type GetUserByID500JSONResponse ErrorResponse
 
 func (response GetUserByID500JSONResponse) VisitGetUserByIDResponse(w http.ResponseWriter) error {
+
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
 		return err
@@ -475,10 +491,8 @@ type StrictServerInterface interface {
 	GetUserByID(ctx context.Context, request GetUserByIDRequestObject) (GetUserByIDResponseObject, error)
 }
 
-type (
-	StrictHandlerFunc    func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error)
-	StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
-)
+type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error)
+type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
 type StrictHTTPServerOptions struct {
 	RequestErrorHandlerFunc  func(w http.ResponseWriter, r *http.Request, err error)

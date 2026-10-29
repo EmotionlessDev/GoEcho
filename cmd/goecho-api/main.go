@@ -60,13 +60,20 @@ func run() error {
 	hasher := password.NewBcryptPasswordHasher()
 
 	userRepo := userRepo.NewPostgresUserRepository(pool)
+
 	createUser := userUsecase.NewCreateUser(userRepo, hasher)
-	userHandler := userHttp.NewHandler(createUser)
+	getUserByID := userUsecase.NewGetUserByID(userRepo)
+
+	userHandler := userHttp.NewHandler(createUser, getUserByID)
 
 	apiHandler := apiHttp.NewAPIHandler(userHandler)
 	// user routes
 	strictHandler := httpapi.NewStrictHandler(apiHandler, nil)
-	httpapi.HandlerFromMux(strictHandler, router)
+
+	httpapi.HandlerWithOptions(strictHandler, httpapi.ChiServerOptions{
+		BaseRouter:       router,
+		ErrorHandlerFunc: apiHttp.OpenAPIErrorHandler,
+	})
 
 	log.InfoContext(ctx, "запускаю goecho-api",
 		slog.String("env", cfg.Env),

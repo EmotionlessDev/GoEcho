@@ -7,15 +7,11 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/EmotionlessDev/GoEcho/internal/user/apperror"
 	"github.com/EmotionlessDev/GoEcho/internal/user/domain"
 )
 
-var (
-	ErrInvalidInput      = errors.New("invalid user input")
-	ErrUserAlreadyExists = errors.New("user already exists")
-)
-
-type UserRepository interface {
+type UserCreator interface {
 	Create(ctx context.Context, user *domain.User) error
 }
 
@@ -30,12 +26,12 @@ type CreateUserInput struct {
 }
 
 type CreateUser struct {
-	repo   UserRepository
+	repo   UserCreator
 	hasher PasswordHasher
 }
 
 func NewCreateUser(
-	repo UserRepository,
+	repo UserCreator,
 	hasher PasswordHasher,
 ) *CreateUser {
 	return &CreateUser{
@@ -54,7 +50,7 @@ func (uc *CreateUser) Execute(
 	if !validUsername(input.Username) ||
 		!validEmail(input.Email) ||
 		!validPassword(input.Password) {
-		return nil, ErrInvalidInput
+		return nil, apperror.ErrInvalidInput
 	}
 
 	passwordHash, err := uc.hasher.Hash(input.Password)
@@ -69,8 +65,8 @@ func (uc *CreateUser) Execute(
 	}
 
 	if err := uc.repo.Create(ctx, user); err != nil {
-		if errors.Is(err, ErrUserAlreadyExists) {
-			return nil, ErrUserAlreadyExists
+		if errors.Is(err, apperror.ErrUserAlreadyExists) {
+			return nil, apperror.ErrUserAlreadyExists
 		}
 
 		return nil, fmt.Errorf("create user: %w", err)

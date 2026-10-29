@@ -2,9 +2,13 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
+	"github.com/EmotionlessDev/GoEcho/internal/user/apperror"
 	"github.com/EmotionlessDev/GoEcho/internal/user/domain"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -42,4 +46,37 @@ func (r *PostgresUserRepository) Create(
 	}
 
 	return nil
+}
+
+const getUserByIDQuery = `
+	SELECT id, username, email, password_hash, created_at, updated_at
+	FROM users
+	WHERE id = $1
+`
+
+func (r *PostgresUserRepository) GetByID(
+	ctx context.Context,
+	id uuid.UUID,
+) (*domain.User, error) {
+	row := r.pool.QueryRow(ctx, getUserByIDQuery, id)
+
+	var user domain.User
+
+	err := row.Scan(
+		&user.ID,
+		&user.Username,
+		&user.Email,
+		&user.PasswordHash,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, apperror.ErrUserNotFound
+		}
+
+		return nil, fmt.Errorf("get user by id: %w", err)
+	}
+
+	return &user, nil
 }

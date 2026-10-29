@@ -8,5 +8,5 @@ packages:
       pkgname: "{{.SrcPackageName}}"
       structname: "Mock{{.InterfaceName}}"
     interfaces:
-      UserRepository:
+      UserCreator:
       PasswordHasher:

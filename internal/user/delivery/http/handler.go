@@ -6,17 +6,21 @@ import (
 	"fmt"
 
 	httpapi "github.com/EmotionlessDev/GoEcho/gen/http"
+	"github.com/EmotionlessDev/GoEcho/internal/delivery/http/apierror"
+	"github.com/EmotionlessDev/GoEcho/internal/user/apperror"
 	"github.com/EmotionlessDev/GoEcho/internal/user/usecase"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
 type Handler struct {
-	createUser *usecase.CreateUser
+	createUser  *usecase.CreateUser
+	getUserByID *usecase.GetUserByID
 }
 
-func NewHandler(createUser *usecase.CreateUser) *Handler {
+func NewHandler(createUser *usecase.CreateUser, getUserByID *usecase.GetUserByID) *Handler {
 	return &Handler{
-		createUser: createUser,
+		createUser:  createUser,
+		getUserByID: getUserByID,
 	}
 }
 
@@ -29,8 +33,8 @@ func (h *Handler) CreateUser(
 ) (httpapi.CreateUserResponseObject, error) {
 	if request.Body == nil || request.Body.Password == nil {
 		return httpapi.CreateUser400JSONResponse{
-			Code:    "INVALID_REQUEST",
-			Message: "Username, email and password are required",
+			Code:    apierror.InvalidRequest.Code,
+			Message: "Username, email and password are required", // Тут не использую apierror, чтобы добавить детали.
 		}, nil
 	}
 
@@ -41,16 +45,16 @@ func (h *Handler) CreateUser(
 	})
 	if err != nil {
 		switch {
-		case errors.Is(err, usecase.ErrInvalidInput):
+		case errors.Is(err, apperror.ErrInvalidInput):
 			return httpapi.CreateUser400JSONResponse{
-				Code:    "INVALID_INPUT",
-				Message: "Invalid username, email or password",
+				Code:    apierror.InvalidRequest.Code,
+				Message: apierror.InvalidRequest.Message,
 			}, nil
 
-		case errors.Is(err, usecase.ErrUserAlreadyExists):
+		case errors.Is(err, apperror.ErrUserAlreadyExists):
 			return httpapi.CreateUser409JSONResponse{
-				Code:    "USER_ALREADY_EXISTS",
-				Message: "Username or email already exists",
+				Code:    apierror.UserAlreadyExists.Code,
+				Message: apierror.UserAlreadyExists.Message,
 			}, nil
 
 		default:
@@ -77,10 +81,32 @@ func (h *Handler) GetCurrentUser(
 	return nil, errors.New("get current user: not implemented")
 }
 
-// Пока endpoint не реализован.
 func (h *Handler) GetUserByID(
 	ctx context.Context,
 	request httpapi.GetUserByIDRequestObject,
 ) (httpapi.GetUserByIDResponseObject, error) {
-	return nil, errors.New("get user by ID: not implemented")
+	user, err := h.getUserByID.Execute(ctx, usecase.GetUserByIDInput{
+		ID: request.UserID,
+	})
+	if err != nil {
+		switch {
+		case errors.Is(err, apperror.ErrUserNotFound):
+			return httpapi.GetUserByID404JSONResponse{
+				Code:    apierror.UserNotFound.Code,
+				Message: apierror.UserNotFound.Message,
+			}, nil
+
+		default:
+			return nil, fmt.Errorf("get user by id: %w", err)
+		}
+	}
+
+	id := openapi_types.UUID(user.ID)
+	createdAt := user.CreatedAt
+
+	return httpapi.GetUserByID200JSONResponse{
+		Id:        &id,
+		Username:  user.Username,
+		CreatedAt: &createdAt,
+	}, nil
 }

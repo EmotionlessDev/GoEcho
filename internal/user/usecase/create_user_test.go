@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/EmotionlessDev/GoEcho/internal/user/apperror"
 	"github.com/EmotionlessDev/GoEcho/internal/user/domain"
 	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -14,7 +15,7 @@ func TestCreateUser_Success(t *testing.T) {
 	// Arrange
 	ctx := context.Background()
 
-	repo := NewMockUserRepository(t)
+	repo := NewMockUserCreator(t)
 	hasher := NewMockPasswordHasher(t)
 
 	hasher.On("Hash", "password123").Return("hashed_password", nil).Once()
@@ -62,7 +63,7 @@ func TestCreateUser_InvalidInput(t *testing.T) {
 	// Act
 	for i, input := range invalidInputs {
 		t.Run(fmt.Sprintf("InvalidInputsCase_%d", i), func(t *testing.T) {
-			repo := NewMockUserRepository(t)
+			repo := NewMockUserCreator(t)
 			hasher := NewMockPasswordHasher(t)
 
 			uc := NewCreateUser(repo, hasher)
@@ -71,7 +72,7 @@ func TestCreateUser_InvalidInput(t *testing.T) {
 
 			require.Error(t, err)
 			require.Nil(t, user)
-			require.Equal(t, ErrInvalidInput, err)
+			require.Equal(t, apperror.ErrInvalidInput, err)
 		})
 	}
 }
@@ -80,7 +81,7 @@ func TestCreateUser_UserAlreadyExists(t *testing.T) {
 	// Arrange
 	ctx := context.Background()
 
-	repo := NewMockUserRepository(t)
+	repo := NewMockUserCreator(t)
 	hasher := NewMockPasswordHasher(t)
 
 	userInput := CreateUserInput{
@@ -93,7 +94,7 @@ func TestCreateUser_UserAlreadyExists(t *testing.T) {
 
 	repo.On("Create", mock.Anything, mock.MatchedBy(func(user *domain.User) bool {
 		return user.Username == "testuser" && user.Email == "test@gmail.com" && user.PasswordHash == "hasher_password"
-	})).Return(ErrUserAlreadyExists).Once()
+	})).Return(apperror.ErrUserAlreadyExists).Once()
 
 	uc := NewCreateUser(repo, hasher)
 
@@ -103,7 +104,7 @@ func TestCreateUser_UserAlreadyExists(t *testing.T) {
 	// Aseert
 	require.Error(t, err)
 	require.Nil(t, user)
-	require.Equal(t, ErrUserAlreadyExists, err)
+	require.Equal(t, apperror.ErrUserAlreadyExists, err)
 
 	repo.AssertExpectations(t)
 	hasher.AssertExpectations(t)
@@ -113,7 +114,7 @@ func TestCreateUser_HashError(t *testing.T) {
 	// Arrange
 	ctx := context.Background()
 
-	repo := NewMockUserRepository(t)
+	repo := NewMockUserCreator(t)
 	hasher := NewMockPasswordHasher(t)
 
 	userInput := CreateUserInput{
