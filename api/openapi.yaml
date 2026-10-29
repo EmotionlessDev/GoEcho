@@ -283,6 +283,49 @@ components:
           readOnly: true
           example: "2026-10-21T12:00:00Z"
 
+    LoginRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+          example: artem@example.com
+        password:
+          type: string
+          format: password
+          minLength: 8
+          maxLength: 128
+          writeOnly: true
+
+    LoginResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - access_token
+        - token_type
+        - expires_in
+      properties:
+        access_token:
+          type: string
+          description: JWT access token
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        token_type:
+          type: string
+          enum:
+            - Bearer
+          example: Bearer
+        expires_in:
+          type: integer
+          format: int64
+          minimum: 1
+          description: Access token lifetime in seconds
+          example: 900
+
     ErrorResponse:
       type: object
       additionalProperties: false
