@@ -55,10 +55,16 @@ type HTTP struct {
 	IdleTimeout       time.Duration
 }
 
+type JWT struct {
+	Secret string
+	TTL    time.Duration
+}
+
 type GoEchoAPI struct {
 	App
 	Postgres Postgres
 	HTTP     HTTP
+	JWT      JWT
 }
 
 func (l *loader) app(service string) App {
@@ -102,12 +108,20 @@ func (l *loader) http(defaultAddr string) HTTP {
 	}
 }
 
+func (l *loader) jwt() JWT {
+	return JWT{
+		Secret: l.str("JWT_SECRET", ""),
+		TTL:    l.duration("JWT_TTL", 15*time.Minute),
+	}
+}
+
 func LoadGoEchoAPI() (GoEchoAPI, error) {
 	l := &loader{}
 	cfg := GoEchoAPI{
 		App:      l.app("goecho-api"),
 		HTTP:     l.http(":8080"),
 		Postgres: l.postgres(),
+		JWT:      l.jwt(),
 	}
 
 	if err := l.err(); err != nil {

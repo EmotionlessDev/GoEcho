@@ -1,0 +1,12 @@
+template: testify
+
+packages:
+  github.com/EmotionlessDev/GoEcho/internal/user/usecase:
+    config:
+      dir: "{{.InterfaceDir}}"
+      filename: "mock_{{.InterfaceName}}.go"
+      pkgname: "{{.SrcPackageName}}"
+      structname: "Mock{{.InterfaceName}}"
+    interfaces:
+      UserCreator:
+      PasswordHasher:

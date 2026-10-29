@@ -73,6 +73,26 @@ services:
       timeout: 3s
       retries: 12
       start_period: 5s
+  swagger-ui:
+    image: swaggerapi/swagger-ui:v5.29.0
+    restart: unless-stopped
+    environment:
+      SWAGGER_JSON: /spec/openapi.yaml
+    volumes:
+      - ./api/openapi.yaml:/spec/openapi.yaml:ro
+    ports:
+      - "127.0.0.1:${SWAGGER_UI_PORT:-8085}:8080"
+    healthcheck:
+      test:
+        - CMD
+        - wget
+        - -q
+        - --spider
+        - http://127.0.0.1:8080/
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 5s
 
 volumes:
   pgdata:
